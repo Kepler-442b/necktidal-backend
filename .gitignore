@@ -1,6 +1,9 @@
 # Created by https://www.gitignore.io/api/vim,macos,django,python
 # Edit at https://www.gitignore.io/?templates=vim,macos,django,python
 
+### 데이터 ###
+data/
+
 ### Django ###
 my_settings.py
 *.log
@@ -292,10 +295,11 @@ fabric.properties
 ### PyCharm Patch ###
 # Comment Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-215987721
 
-# *.iml
-# modules.xml
-# .idea/misc.xml
-# *.ipr
+*.iml
+modules.xml
+.idea/misc.xml
+*.ipr
+*.xml
 
 # Sonarlint plugin
 .idea/**/sonarlint/
