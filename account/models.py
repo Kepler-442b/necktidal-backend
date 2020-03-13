@@ -1,5 +1,6 @@
-from django.db      import models
 from music.models   import Artist, Album, Track
+
+from django.db      import models
 
 class User(models.Model):
     email                   = models.EmailField(max_length = 256)
@@ -9,11 +10,11 @@ class User(models.Model):
     birthday                = models.DateField(null = True)
     first_name              = models.CharField(max_length = 100, null = True)
     last_name               = models.CharField(max_length = 100, null = True)
-    gender                  = models.ForeignKey("Gender", on_delete = models.CASCADE, null = True)
+    gender                  = models.ForeignKey("Gender", on_delete = models.SET_NULL, null = True)
     language                = models.CharField(max_length = 50, null = True)
     is_subscribed           = models.BooleanField(default = False)
-    subscription            = models.ForeignKey("Subscription", on_delete = models.CASCADE, null = True)
-    discount_information    = models.ForeignKey("DiscountInformation", on_delete = models.CASCADE, null = True)
+    subscription            = models.ForeignKey("Subscription", on_delete = models.SET_NULL, null = True)
+    discount_information    = models.ForeignKey("DiscountInformation", on_delete = models.SET_NULL, null = True)
     notification            = models.ManyToManyField("Notification", through = "UserNotification")
     created_at              = models.DateTimeField(auto_now_add = True)
     updated_at              = models.DateTimeField(auto_now = True, null = True)
@@ -24,17 +25,18 @@ class User(models.Model):
     def __str__(self):
         return self.name
 
+class Gender(models.Model):
+    gender  = models.CharField(max_length = 50, null = True)
+
+    class Meta:
+        db_table = 'genders'
+
 class SocialAccount(models.Model):
     social_email    = models.CharField(max_length = 100, null = True)
 
     class Meta:
         db_table = 'social_accounts'
 
-class Gender(models.Model):
-    gender  = models.CharField(max_length = 50, null = True)
-
-    class Meta:
-        db_table = 'genders'
 
 class Notification(models.Model):
     name        = models.CharField(max_length = 200)
@@ -55,7 +57,7 @@ class UserNotification(models.Model):
 class Subscription(models.Model):
     is_hifi         = models.BooleanField(default = False)
     base_price      = models.DecimalField(max_digits = 10, decimal_places = 2, default = 9.99)
-    discount_plan   = models.ForeignKey("DiscountPlan", on_delete = models.CASCADE, null = True)
+    discount_plan   = models.ForeignKey("DiscountPlan", on_delete = models.SET_NULL, null = True)
 
     class Meta:
         db_table = 'subscriptions'

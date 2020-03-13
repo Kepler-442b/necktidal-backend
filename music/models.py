@@ -1,14 +1,13 @@
-from django.db import models
+from django.db      import models
 
 class Artist(models.Model):
     name            = models.CharField(max_length = 200)
     thumbnail_url   = models.URLField(max_length = 2000, null = True)
-    facebook        = models.URLField(max_length = 2000, null = True)
-    twitter         = models.URLField(max_length = 2000, null = True)
     description     = models.TextField(null = True)
+    gender          = models.ForeignKey('account.Gender', on_delete = models.SET_NULL, null = True)
     album           = models.ManyToManyField('Album', through = 'ArtistAlbum')
     track           = models.ManyToManyField('Track', through = 'ArtistTrack')
-    related_artist  = models.ManyToManyField('self', through = 'RelatedArtist', symmetrical = False)
+    social_media    = models.ManyToManyField('SocialMedia', through = 'ArtistSocialMedia')
 
     class Meta:
         db_table = 'artists'
@@ -16,13 +15,20 @@ class Artist(models.Model):
     def __str__(self):
         return self.name
 
-class RelatedArtist(models.Model):
-    from_artists    = models.ForeignKey(Artist, on_delete = models.SET_NULL, null = True, related_name = 'from_artists')
-    to_artists      = models.ForeignKey(Artist, on_delete = models.SET_NULL, null = True, related_name = 'to_artists')
+class SocialMedia(models.Model):
+    name        = models.CharField(max_length = 50, null = True)
+    icon_url    = models.URLField(max_length = 2000, null = True)
 
     class Meta:
-        unique_together = ('from_artists', 'to_artists')
-        db_table        = 'related_artists'
+        db_table = 'social_media'
+
+class ArtistSocialMedia(models.Model):
+    artist          = models.ForeignKey(Artist, on_delete = models.CASCADE, null = True)
+    social_media    = models.ForeignKey(SocialMedia, on_delete = models.CASCADE, null = True)
+    account_url     = models.URLField(max_length = 2000, null = True)
+
+    class Meta:
+        db_table = 'artist_social_media'
 
 class Album(models.Model):
     name            = models.CharField(max_length = 200)
@@ -31,7 +37,7 @@ class Album(models.Model):
     is_live         = models.BooleanField(null = True)
     is_single       = models.BooleanField(null = True)
     track           = models.ManyToManyField('Track', through = 'AlbumTrack')
-    related_albums  = models.ManyToManyField('self', through = 'RelatedAlbum', symmetrical = False)
+    genre           = models.ManyToManyField('Genre', through = 'AlbumGenre')
 
     class Meta:
         db_table = 'albums'
@@ -39,35 +45,35 @@ class Album(models.Model):
     def __str__(self):
         return self.name
 
-class RelatedAlbum(models.Model):
-    from_albums = models.ForeignKey(Album, on_delete = models.SET_NULL, null = True, related_name = 'from_albums')
-    to_albums   = models.ForeignKey(Album, on_delete = models.SET_NULL, null = True, related_name = 'to_albums')
+class Genre(models.Model):
+    name    = models.CharField(max_length = 50)
 
     class Meta:
-        unique_together = ('from_albums', 'to_albums')
-        db_table        = 'related_albums'
+        db_table = 'genres'
+
+    def __str__(self):
+        return self.name
+
+class AlbumGenre(models.Model):
+    album   = models.ForeignKey(Album, on_delete = models.CASCADE)
+    genre   = models.ForeignKey(Genre, on_delete = models.CASCADE)
+
+    class Meta:
+        db_table = 'album_genres'
 
 class Track(models.Model):
     name            = models.CharField(max_length = 200)
-    time            = models.CharField(max_length = 50)
+    music_url       = models.URLField(max_length = 2000, null = True)
+    time            = models.TimeField()
     is_explicit     = models.BooleanField(null = True)
     is_master       = models.BooleanField(null = True)
     credit          = models.TextField(null = True)
-    related_track   = models.ManyToManyField('self', through = 'RelatedTrack', symmetrical = False)
 
     class Meta:
         db_table = 'tracks'
 
     def __str__(self):
         return self.name
-
-class RelatedTrack(models.Model):
-    from_tracks = models.ForeignKey(Track, on_delete = models.SET_NULL, null = True, related_name = 'from_tracks')
-    to_tracks   = models.ForeignKey(Track, on_delete = models.SET_NULL, null = True, related_name = 'to_tracks')
-
-    class Meta:
-        unique_together = ('from_tracks', 'to_tracks')
-        db_table        = 'related_tracks'
 
 class ArtistAlbum(models.Model):
     artist   = models.ForeignKey(Artist, on_delete = models.CASCADE, null = True)
@@ -89,4 +95,3 @@ class AlbumTrack(models.Model):
 
     class Meta:
         db_table = 'album_tracks'
-
