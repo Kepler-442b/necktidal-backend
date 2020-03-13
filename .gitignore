@@ -294,7 +294,7 @@ fabric.properties
 
 ### PyCharm Patch ###
 # Comment Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-215987721
-
+.idea/
 *.iml
 modules.xml
 .idea/misc.xml
@@ -311,6 +311,15 @@ modules.xml
 .idea/**/markdown-navigator.xml
 .idea/**/markdown-navigator/
 
-# End of https://www.gitignore.io/api/pycharm
+### JupyterNotebooks ###
+# gitignore template for Jupyter Notebooks
+# website: http://jupyter.org/
+
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# IPython
+profile_default/
+ipython_config.py
 
 # End of https://www.gitignore.io/api/vim,macos,django,python
