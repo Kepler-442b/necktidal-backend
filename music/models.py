@@ -68,6 +68,7 @@ class Track(models.Model):
     is_explicit     = models.BooleanField(null = True)
     is_master       = models.BooleanField(null = True)
     credit          = models.TextField(null = True)
+    count           = models.IntegerField(null = True)
 
     class Meta:
         db_table = 'tracks'

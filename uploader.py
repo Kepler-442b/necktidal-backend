@@ -12,7 +12,8 @@ django.setup()
 from music.models import *
 
 #Track
-def add_track:
+def add_track():
+#    Track.objects.all().delete()
     with open('data/track.csv') as hand:
         reader = csv.reader(hand)
         bulk_list = []
@@ -32,7 +33,8 @@ def add_track:
     Track.objects.bulk_create(bulk_list)
 
 #Artist
-def add_artist:
+def add_artist():
+#    Artist.objects.all().delete()
     with open('data/artist.csv') as hand:
         reader = csv.reader(hand)
         bulk_list = []
@@ -46,7 +48,8 @@ def add_artist:
     Artist.objects.bulk_create(bulk_list)
 
 #Album
-def add_album:
+def add_album():
+#    Album.objects.all().delete()
     with open('data/album.csv') as hand:
         reader = csv.reader(hand)
         bulk_list = []
@@ -62,7 +65,8 @@ def add_album:
 
 
 #ArtistAlbum
-def add_artist_album:
+def add_artist_album():
+#    ArtistAlbum.objects.all().delete()
     with open('data/featured_album_page_m.csv') as hand:
         reader = csv.reader(hand)
         bulk_list = []
@@ -72,20 +76,20 @@ def add_artist_album:
             artist_csv = row[3]
             album = Album.objects.filter(name=album_csv, is_single = 0, is_live = 0)
             artist = Artist.objects.filter(name=artist_csv)
-            ArtistAlbum.objects.create(album_id = album[0].id, artist_id = artist[0].id)
+            bulk_list.append(ArtistAlbum(
+                album_id = album[0].id,
+                artist_id = artist[0].id))
+
+    ArtistAlbum.objects.bulk_create(bulk_list)
+
 
 #ArtistTrack
-def add_artist_track:
+def add_artist_track():
+#    ArtistTrack.objects.all().delete()
     with open('data/featured_album_page_m.csv') as hand:
         reader = csv.reader(hand)
         bulk_list = []
-        next(reader, None)
         for row in reader:
-            album_csv = row[2]
-            album = Album.objects.get(name=album_csv, is_single = 0, is_live = 0)
-            tracks_csv_org = row[5]
-            artist_csv_org = row[6]
-            
             replacer = '='
             tracks_csv = row[5].strip('[ ] \'').replace('\', \'', replacer).replace('\', \"',replacer).replace('\", \'', replacer).split(replacer)
             artist_csv = row[6].strip('[ ] \'').replace('\', \'', replacer).split(replacer)
@@ -99,10 +103,15 @@ def add_artist_track:
                 for person in artist_s:
                     artist = Artist.objects.filter(name=person)
                     if artist.exists() and len(track) == 1:
-                        ArtistTrack.objects.create(track_id = track[0].id, artist_id = artist[0].id)
+                        bulk_list.append(ArtistTrack(
+                            track_id = track[0].id,
+                            artist_id = artist[0].id))
+
+    ArtistTrack.objects.bulk_create(bulk_list)
 
 #AlbumTrack
-def add_album_track:
+def add_album_track():
+#    AlbumTrack.objects.all().delete()
     with open('data/featured_album_page_m.csv') as hand:
         reader = csv.reader(hand)
         bulk_list = []
@@ -110,24 +119,31 @@ def add_album_track:
         for row in reader:
             album_csv = row[2]
             album = Album.objects.get(name=album_csv, is_single = 0, is_live = 0)
-            
-            tracks_csv = row[5].strip('[ ]').split(',')      
-            
+
+            tracks_csv = row[5].strip('[ ]').split(',')
             for item in tracks_csv:
                 track_name = item.strip().strip("''")
                 track = Track.objects.filter(name = track_name)
                 if len(track) == 1:
-                    AlbumTrack.objects.create(album_id = album.id, track_id = track[0].id)
+                    bulk_list.append(AlbumTrack(
+                        album_id = album.id,
+                        track_id = track[0].id))
 
-        AlbumTrack.objects.create(album_id = 81, track_id = 49)
-        AlbumTrack.objects.create(album_id = 177, track_id = 86)
+        bulk_list.append(AlbumTrack(album_id = 81, track_id = 49))
+        bulk_list.append(AlbumTrack(album_id = 177, track_id = 86))
+
+    AlbumTrack.objects.bulk_create(bulk_list)
 
 #SocialMedia
 def add_social_media():
-    SocialMedia.objects.create(name = 'facebook')
-    SocialMedia.objects.create(name = 'twitter')
+#    SocialMedia.objects.all().delete()
+    bulk_list = []
+    bulk_list.append(SocialMedia(name = 'facebook'))
+    bulk_list.append(SocialMedia(name = 'twitter'))
+    SocialMedia.objects.bulk_create(bulk_list)
 
-def add_artist_social_media:
+def add_artist_social_media():
+#    ArtistSocialMedia.objects.all().delete()
     with open('data/artist.csv') as hand:
         reader = csv.reader(hand)
         bulk_list = []
@@ -142,17 +158,25 @@ def add_artist_social_media:
             if len(artist) == 1:
                 if len(facebook) > 0:
                     media_id    = SocialMedia.objects.filter(name = 'facebook')[0].id
-                    ArtistSocialMedia.objects.create(social_media_id = media_id, account_url=facebook, artist_id = artist[0].id)
+                    bulk_list.append(ArtistSocialMedia(
+                        social_media_id = media_id,
+                        account_url=facebook,
+                        artist_id = artist[0].id))
 
                 if len(twitter) > 0:
                     media_id    = SocialMedia.objects.filter(name = 'twitter')[0].id
-                    ArtistSocialMedia.objects.create(social_media_id = media_id, account_url = twitter, artist_id = artist[0].id)
+                    bulk_list.append(ArtistSocialMedia(
+                        social_media_id = media_id,
+                        account_url = twitter,
+                        artist_id = artist[0].id))
 
-#add_track()
-#add_artist()
-#add_album()
-#add_artist_album()
-#add_artist_track()
-#add_album_track:()
+    ArtistSocialMedia.objects.bulk_create(bulk_list)
+
+add_artist()
+add_track()
+add_album()
+add_artist_album()
+add_artist_track()
+add_album_track()
 #add_social_media()
-#add_artist_social_media()
+add_artist_social_media()
