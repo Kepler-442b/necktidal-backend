@@ -1,12 +1,17 @@
-from django.test import TestCase
-
 import  json
+import  jwt
 import  bcrypt
 
-from django.test    import TestCase
-from django.test    import Client
+from django.test            import TestCase
+from django.test            import Client
+from .utils                 import signin_decorator
+from my_settings            import SECRET_KEY, ALGORITHM
 
-from .models        import User
+from .models                import User, FavoriteAlbum, FavoriteArtist, FavoriteTrack
+from music.models           import Artist, Album, Track, AlbumTrack, ArtistTrack, ArtistAlbum
+
+user    = User.objects.get(id=2)
+token   = jwt.encode({'user_id': user.id}, SECRET_KEY['secret'], algorithm = ALGORITHM).decode('utf-8')
 
 class UserTest(TestCase):
     def setUp(self):
@@ -19,6 +24,7 @@ class UserTest(TestCase):
     def tearDown(self):
         User.objects.all().delete()
 
+#signup test
     def test_signup_view_post_success(self):
         user    = {
             'email'     : 'skim1026@abc.abc',
@@ -84,6 +90,7 @@ class UserTest(TestCase):
             }
         )
 
+# signin test
     def test_signin_view_post_success(self):
         user    = {
             'email'     : 'skim1025@abc.abc',
@@ -93,11 +100,6 @@ class UserTest(TestCase):
         token       = response.json()['Authorization']
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(),
-            {
-                "Authorization": token
-            }
-        )
 
     def test_signin_view_post_incorrect_password(self):
         user    = {
@@ -128,5 +130,254 @@ class UserTest(TestCase):
         self.assertEqual(response.json(),
             {
                 "message": "INVALID_KEYS"
+            }
+        )
+
+class MyCollectionTest(TestCase):
+    def setUp(self):
+        check = '12AB34cd!!'
+        User.objects.create(
+            email       = 'joker@abc.abc',
+            password    = bcrypt.hashpw(check.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        )
+
+        Artist.objects.create(
+            id="1",
+            name="Vampire Weekend",
+            thumbnail_url="VW.jpeg"
+        )
+        Album.objects.create(
+            id="1",
+            name="FOTB",
+            is_single=True,
+            is_live=False,
+            thumbnail_url="FOTB.jpeg",
+            released_date="2020-03-07 12:54:18.000000"
+        )
+        Track.objects.create(
+            id="1",
+            name="Harmony Hall",
+            time="00:03:30",
+            music_url= "track1.mp3",
+            credit=[
+                {'Producer': ['Brandon Finessin', 'Bugz Ronin']},
+                {'Writer':['Cousin Vinny', 'Ike Beatz']},
+                {'Featured Artist' :'Brandon Finessin'},
+                {'Lyricist':['Bugz Ronin', 'Supah Mario']},
+                {'Composer' : 'OOGIE MANE'}
+            ],
+            is_explicit=True,
+            is_master=False,
+        )
+        ArtistTrack.objects.create(
+            artist_id='1',
+            track_id='1'
+        )
+        AlbumTrack.objects.create(
+            album_id='1',
+            track_id='1'
+        )
+        ArtistAlbum.objects.create(
+            artist_id='1',
+            album_id='1'
+        )
+        FavoriteArtist.objects.create(
+            user_id='1',
+            artist_id='1'
+        )
+        FavoriteAlbum.objects.create(
+            user_id='1',
+            album_id='1'
+        )
+        FavoriteTrack.objects.create(
+            user_id='1',
+            track_id='1',
+            date_added="2020-03-14 20:40:43.305173"
+        )
+
+    def tearDown(self):
+        User.objects.all().delete()
+        Artist.objects.all().delete()
+        Album.objects.all().delete()
+        Track.objects.all().delete()
+        FavoriteArtist.objects.all().delete()
+        FavoriteAlbum.objects.all().delete()
+        FavoriteTrack.objects.all().delete()
+
+ #collection test
+    def test_collection_view_get_artist_success(self):
+        response = Client().get(
+            "/account/collection?category=artist",
+            **{"HTTP_AUTHORIZATION":token,
+                "content_type" : "application/json"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+             {
+                 'artists': [{
+                     'id': 1,
+                     'name': "Vampire Weekend",
+                     'thumbnail_url': 'VW.jpeg',}]
+             }
+        )
+
+    def test_collection_view_get_album_success(self):
+        response = Client().get(
+            "/account/collection?category=album",
+            **{"HTTP_AUTHORIZATION":token,
+                "content_type" : "application/json"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+             {
+                 'albums': [{
+                     'id'           : 1,
+                     'name'         : "FOTB",
+                     'thumbnail_url': "FOTB.jpeg",
+                     'is_live'      : False,
+                     'is_single'    : True,
+                     'artist'       : "Vampire Weekend"}]
+             }
+        )
+
+    def test_collection_view_get_track_success(self):
+        response = Client().get(
+            "/account/collection?category=track",
+            **{"HTTP_AUTHORIZATION":token,
+                "content_type" : "application/json"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+             {
+                 'tracks':[{
+                     'id': 1,
+                     'name': "Harmony Hall",
+                     'music': "track1.mp3",
+                     'time': "00:03:30",
+                     'is_explicit': True,
+                     'is_master': False,
+                     'artist': "Vampire Weekend",
+                     'album': "FOTB",
+                 }]
+             }
+        )
+
+    def test_collection_view_post_artist_success(self):
+        test        = {"artist_id":"1"}
+        response    = Client().post(
+            "/account/collection?category=artist",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION":token,
+                "content_type" : "application/json"})
+        self.assertEqual(response.status_code, 200)
+
+    def test_collection_view_post_album_success(self):
+        test        = {"album_id":"1"}
+        response    = Client().post(
+            "/account/collection?category=album",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION":token,
+                "content_type" : "application/json"})
+        self.assertEqual(response.status_code, 200)
+
+    def test_collection_view_post_track_success(self):
+        test = {"track_id": "1"}
+        response = Client().post(
+            "/account/collection?category=track",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION":token,
+                "content_type" : "application/json"})
+        self.assertEqual(response.status_code, 200)
+
+    def test_collection_view_post_artist_key_error(self):
+        test            = {'ARTIST_ID':"1"}
+        response = Client().post(
+            "/account/collection?category=artist",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION":token,
+               "content_type" : "application/json"})
+        self.assertEqual(response.status_code, 400)
+
+    def test_collection_view_post_album_key_error(self):
+        test = {'ALBUM_ID': "1"}
+        response = Client().post(
+            "/account/collection?category=album",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION":token,
+               "content_type" : "application/json"})
+        self.assertEqual(response.status_code, 400)
+
+    def test_collection_view_post_track_key_error(self):
+        test = {'TRACK_ID': "1"}
+        response = Client().post(
+            "/account/collection?category=track",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION":token,
+               "content_type" : "application/json"})
+        self.assertEqual(response.status_code, 400)
+
+    def test_collection_view_delete_artist_success(self):
+        test    = {'artist_id':"1"}
+        response = Client().delete(
+            "/account/collection?category=artist",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION":token,
+               "content_type" : "application/json"})
+        self.assertEqual(response.status_code, 200)
+
+    def test_collection_view_delete_album_success(self):
+        test    = {'album_id':"1"}
+        response = Client().delete(
+            "/account/collection?category=album",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION":token,
+               "content_type" : "application/json"})
+        self.assertEqual(response.status_code, 200)
+
+    def test_collection_view_delete_track_success(self):
+        test    = {'track_id':'1'}
+        response = Client().delete(
+            "/account/collection?category=track",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION": token,
+               "content_type": "application/json"})
+        self.assertEqual(response.status_code, 200)
+
+    def test_collection_view_delete_artist_key_error(self):
+        test = {'ARTIST_ID':'1'}
+        response = Client().delete(
+            "/account/collection?category=artist",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION": token,
+               "content_type": "application/json"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(),
+            {
+                'message': 'INVALID_KEYS'
+            }
+        )
+
+    def test_collection_view_delete_album_key_error(self):
+        test = {'ARTIST_ID': '1'}
+        response = Client().delete(
+            "/account/collection?category=album",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION": token,
+               "content_type": "application/json"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(),
+            {
+                'message': 'INVALID_KEYS'
+            }
+        )
+
+    def test_collection_view_delete_track_key_error(self):
+        test = {'ARTIST_ID':'1'}
+        response = Client().delete(
+            "/account/collection?category=track",
+            json.dumps(test),
+            **{"HTTP_AUTHORIZATION": token,
+               "content_type": "application/json"})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(),
+            {
+                'message': 'INVALID_KEYS'
             }
         )

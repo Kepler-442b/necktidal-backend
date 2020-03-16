@@ -26,7 +26,7 @@ class User(models.Model):
         db_table = 'users'
 
     def __str__(self):
-        return self.name
+        return self.email
 
 class Gender(models.Model):
     gender  = models.CharField(max_length = 50, null = True)
@@ -39,7 +39,6 @@ class SocialAccount(models.Model):
 
     class Meta:
         db_table = 'social_accounts'
-
 
 class Notification(models.Model):
     name        = models.CharField(max_length = 200)
@@ -108,7 +107,7 @@ class FavoriteAlbum(models.Model):
 class FavoriteTrack(models.Model):
     user        = models.ForeignKey(User, on_delete = models.CASCADE, null = True)
     track       = models.ForeignKey(Track, on_delete = models.CASCADE, null = True)
-    date_added  = models.DateField(null = True)
+    date_added  = models.DateTimeField(auto_now_add = True)
 
     class Meta:
         db_table = 'favorite_tracks'
@@ -117,6 +116,8 @@ class Playlist(models.Model):
     name        = models.CharField(max_length = 200)
     description = models.CharField(max_length = 200, null = True)
     user        = models.ForeignKey(User, on_delete = models.CASCADE)
+    images      = models.ForeignKey(Album, on_delete = models.CASCADE, null = True)
+    tracks      = models.ManyToManyField(Track, through = "PlaylistTrack")
 
     class Meta:
         db_table = 'playlists'
