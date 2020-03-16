@@ -16,6 +16,9 @@ class User(models.Model):
     subscription            = models.ForeignKey("Subscription", on_delete = models.SET_NULL, null = True)
     discount_information    = models.ForeignKey("DiscountInformation", on_delete = models.SET_NULL, null = True)
     notification            = models.ManyToManyField("Notification", through = "UserNotification")
+    artist                  = models.ManyToManyField(Artist, through = "FavoriteArtist")
+    album                   = models.ManyToManyField(Album, through = "FavoriteAlbum")
+    track                   = models.ManyToManyField(Track, through = "FavoriteTrack")
     created_at              = models.DateTimeField(auto_now_add = True)
     updated_at              = models.DateTimeField(auto_now = True, null = True)
 
@@ -63,7 +66,7 @@ class Subscription(models.Model):
         db_table = 'subscriptions'
 
     def __str__(self):
-        return self.name
+        return self.base_price
 
 class DiscountPlan(models.Model):
     name            = models.CharField(max_length = 100, null = True)
@@ -86,7 +89,7 @@ class DiscountInformation(models.Model):
         db_table = 'discount_information'
 
     def __str__(self):
-        return self.name
+        return self.first_name
 
 class FavoriteArtist(models.Model):
     user    = models.ForeignKey(User, on_delete = models.CASCADE, null = True)
@@ -103,8 +106,9 @@ class FavoriteAlbum(models.Model):
         db_table = 'favorite_albums'
 
 class FavoriteTrack(models.Model):
-    user    = models.ForeignKey(User, on_delete = models.CASCADE, null = True)
-    track   = models.ForeignKey(Track, on_delete = models.CASCADE, null = True)
+    user        = models.ForeignKey(User, on_delete = models.CASCADE, null = True)
+    track       = models.ForeignKey(Track, on_delete = models.CASCADE, null = True)
+    date_added  = models.DateField(null = True)
 
     class Meta:
         db_table = 'favorite_tracks'
