@@ -3,6 +3,7 @@
 
 ### 데이터 ###
 data/
+media/
 
 ### Django ###
 my_settings.py
