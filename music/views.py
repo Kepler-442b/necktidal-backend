@@ -90,6 +90,7 @@ class NewAlbumView(View):
 
             if int(limit) > len(all_albums):
                 return JsonResponse({'message' : 'INVALID_KEY'}, status = 400)
+
             albums          = Album.objects.all().order_by('released_date')[:int(limit)]
             album_attribute = [
                 {
@@ -103,3 +104,35 @@ class NewAlbumView(View):
             return JsonResponse({'albums' : album_attribute}, status = 200)
 
         return JsonResponse({'message' : 'INVALID_KEYWORD'}, status = 400)
+
+class MusicStreamingView(View):
+    def get(self, request):
+        track_id    = request.GET.get('track_id', None)
+
+        if track_id:
+
+            if int(track_id) > len(Track.objects.filter()) or int(track_id) <= 0:
+                return JsonResponse({'message' : 'INVALID_KEY'}, status = 400)
+
+            track       = Track.objects.get(id = track_id)
+            music_file  = track.music_url
+            stream      = self.iteration('media/'+music_file)
+            response    = StreamingHttpResponse(stream, status = 200)  
+
+            response['Cache-Control']       = 'no-cache'
+            response['Content-Type']        = 'audio/mpeg'
+            response['Content-Disposition'] = f'filename = {music_file}'
+
+            return response
+
+        return JsonResponse({'message' : 'INVALID_KEYWORD'}, status = 400)
+
+    def iteration(self, file_name):
+        with open(file_name, 'rb+') as f:
+            while True:
+                content = f.read()
+                if content: 
+                    yield content
+                else:   
+                    break
+

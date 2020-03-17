@@ -41,7 +41,7 @@ def add_artist():
                 thumbnail_url=row[1],
                 description=row[4],
             ))
-
+    
     Artist.objects.bulk_create(bulk_list)
 
 # Album
@@ -99,7 +99,6 @@ def add_artist_track():
                     artist = Artist.objects.filter(name=person)
                     if artist.exists() and len(track) == 1:
                         bulk_list.append(ArtistTrack(
-<<<<<<< HEAD
                             track_id = track[0].id,
                             artist_id = artist[0].id))
 
