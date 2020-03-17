@@ -1,5 +1,6 @@
 
 import os
+
 import my_settings
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -27,7 +28,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'music',
-    'account',	
+    'account',
 ]
 
 MIDDLEWARE = [

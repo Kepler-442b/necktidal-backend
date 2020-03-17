@@ -2,10 +2,13 @@ import  json
 import  jwt
 import  bcrypt
 
-from django.test            import TestCase
-from django.test            import Client
+from django.test            import TestCase, Client
+from unittest.mock          import patch, MagicMock
+
 from .utils                 import signin_decorator
 from my_settings            import SECRET_KEY, ALGORITHM
+
+
 
 from .models                import User, FavoriteAlbum, FavoriteArtist, FavoriteTrack
 from music.models           import Artist, Album, Track, AlbumTrack, ArtistTrack, ArtistAlbum
@@ -24,13 +27,26 @@ class UserTest(TestCase):
     def tearDown(self):
         User.objects.all().delete()
 
+#usercheck test
+    def test_user_check_view_post_success(self):
+        user = {'email': 'skim1025@abc.abc'}
+        response = Client().post('/account/', json.dumps(user), content_type='applications/json')
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_user_check_view_post_fail(self):
+        user = {'email': 'xxxxx@abc.abc'}
+        response = Client().post('/account/', json.dumps(user), content_type='applications/json')
+
+        self.assertEqual(response.status_code, 400)
+
 #signup test
     def test_signup_view_post_success(self):
         user    = {
             'email'     : 'skim1026@abc.abc',
             'password'  : '12Ab34Cd!!'
         }
-        response    = Client().post('/account', json.dumps(user), content_type='applications/json')
+        response    = Client().post('/account/signup', json.dumps(user), content_type='applications/json')
 
         self.assertEqual(response.status_code, 200)
 
@@ -39,7 +55,7 @@ class UserTest(TestCase):
             'email'     : 'skim1026@abc.abc',
             'password'  : '12345'
         }
-        response = Client().post('/account', json.dumps(user), content_type='applications/json')
+        response = Client().post('/account/signup', json.dumps(user), content_type='applications/json')
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(),
@@ -53,7 +69,7 @@ class UserTest(TestCase):
             'email'     : 'skim1025@abc.abc',
             'password'  : '12Ab34Cd!!'
         }
-        response = Client().post('/account', json.dumps(user), content_type='applications/json')
+        response = Client().post('/account/signup', json.dumps(user), content_type='applications/json')
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(),
@@ -67,7 +83,7 @@ class UserTest(TestCase):
             'email'     : '.@.',
             'password'  : '12Ab34Cd!!'
         }
-        response = Client().post('/account', json.dumps(user), content_type='applications/json')
+        response = Client().post('/account/signup', json.dumps(user), content_type='applications/json')
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(),
@@ -81,7 +97,7 @@ class UserTest(TestCase):
             'name'      : 'skim1026@abc.abc',
             'password'  : '12Ab34Cd!!'
         }
-        response = Client().post('/account', json.dumps(user), content_type='applications/json')
+        response = Client().post('/account/signup', json.dumps(user), content_type='applications/json')
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(),
@@ -130,6 +146,39 @@ class UserTest(TestCase):
         self.assertEqual(response.json(),
             {
                 "message": "INVALID_KEYS"
+            }
+        )
+
+class SocialSignInTest(TestCase):
+    def setUp(self):
+        check = '12Ab34Cd!!'
+        User.objects.create(
+            email           = 'skim1025@abc.abc',
+            social_email    = 'skim1025@abc.abc',
+            password        = bcrypt.hashpw(check.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
+            thumbnail_url   = 'me.jpeg',
+            first_name      = 'Soo',
+            last_name       = 'Kim'
+        )
+
+    def tearDown(self):
+        User.objects.all().delete()
+
+    @patch('account.views.requests')
+    def test_social_sign_in_view_get_success(self, mocked_request):
+        class FakeResponse:
+            def json(self):
+                return {
+                    'email' : 'skim1025@abc.abc'
+                }
+        mocked_request.get  = MagicMock(return_value = FakeResponse())
+        header = {'HTTP_Authorization': 'access_token'}
+        response = Client().get('/account/social_signin', content_type='applications/json', **header)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(),
+            {
+                "thumbnail_url" :"me.jpeg",
+                "name"          :"Soo Kim"
             }
         )
 

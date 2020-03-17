@@ -90,7 +90,7 @@ class NewAlbumView(View):
 
             if int(limit) > len(all_albums):
                 return JsonResponse({'message' : 'INVALID_KEY'}, status = 400)
-
+            
             albums          = Album.objects.all().order_by('released_date')[:int(limit)]
             album_attribute = [
                 {
