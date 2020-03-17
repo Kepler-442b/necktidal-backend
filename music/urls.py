@@ -4,6 +4,7 @@ from .views         import (
     ArtistTopTrackView,
     NewTrackView,
     NewAlbumView,
+    MusicStreamingView,
 )
 
 urlpatterns = [
@@ -11,4 +12,5 @@ urlpatterns = [
     path('/artist/<int:artist_id>/toptrack', ArtistTopTrackView.as_view()),
     path('/track/new', NewTrackView.as_view()),
     path('/album/new', NewAlbumView.as_view()),
+    path('/track', MusicStreamingView.as_view()),
 ]

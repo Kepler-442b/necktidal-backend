@@ -311,3 +311,49 @@ class NewAlbumTest(TestCase):
             }
         )
         self.assertEqual(response.status_code, 400)
+
+class StreamingTest(TestCase):
+        
+    def setUp(self):
+        Track.objects.create(
+            id          = 1,
+            name        = 'Baby Pluto',
+            time        = '00:03:30.000000',
+            music_url   = 'DR_GROOVE_GANG_-_A_l_ancienne.mp3',
+            is_master   = 0,
+            is_explicit = 0,
+        )
+    
+    def test_streaming_get_success(self):
+        client = Client()
+        response = client.get('/music/track?track_id=1')
+        self.assertEqual(response.get(
+            'Content-Disposition'),
+            "filename = DR_GROOVE_GANG_-_A_l_ancienne.mp3"
+        )
+        self.assertEqual(response.status_code, 200)
+   
+    def test_streaming_get_no_music(self):
+        client = Client()
+        response = client.get('/music/track?track_id=-1')
+        self.assertEqual(response.json(),
+            {
+                'message' : 'INVALID_KEY'
+            }
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_streaming_get_fail(self):
+        client = Client()
+        response = client.get('/music/track?track_number=1')
+        self.assertEqual(response.json(),
+            {
+                'message' : 'INVALID_KEYWORD'
+            }
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_streaming_get_not_found(self):
+        client = Client()
+        response = client.get('/music/track/listen')
+        self.assertEqual(response.status_code, 404)
